@@ -1,5 +1,8 @@
 # Honeycomb 庫存管理系統
 
+![CI](https://github.com/ianChen806/Honeycomb/actions/workflows/ci.yml/badge.svg)
+![Release](https://github.com/ianChen806/Honeycomb/actions/workflows/release.yml/badge.svg)
+
 簡易的桌面庫存管理系統，支援多幣別與匯率紀錄。
 
 ## 功能
