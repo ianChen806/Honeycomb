@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Honeycomb/Honeycomb.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Honeycomb.Tests/Honeycomb.Tests.csproj" />
+  </Folder>
+</Solution>

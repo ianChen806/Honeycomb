@@ -1,0 +1,23 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:Honeycomb.ViewModels"
+        xmlns:views="using:Honeycomb.Views"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="600"
+        x:Class="Honeycomb.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Icon="/Assets/avalonia-logo.ico"
+        Title="Honeycomb - 庫存管理系統"
+        Width="960" Height="640">
+
+    <TabControl Margin="8">
+        <TabItem Header="商品列表">
+            <views:ProductListView DataContext="{Binding ProductList}"/>
+        </TabItem>
+        <TabItem Header="幣別設定">
+            <views:CurrencySettingsView DataContext="{Binding CurrencySettings}"/>
+        </TabItem>
+    </TabControl>
+
+</Window>
