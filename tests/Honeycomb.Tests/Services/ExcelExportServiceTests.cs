@@ -36,7 +36,9 @@ public class ExcelExportServiceTests : IDisposable
                 CurrencyId = 1,
                 Currency = new Currency { Id = 1, Code = "USD", Name = "美元" },
                 ExchangeRate = 31.5m,
-                Discount = 0.9m
+                Discount = 0.9m,
+                ListingPrice = 5000,
+                CommissionFee = 15
             }
         };
 
@@ -52,9 +54,12 @@ public class ExcelExportServiceTests : IDisposable
         Assert.Equal("幣別", ws.Cell(1, 4).GetString());
         Assert.Equal("匯率", ws.Cell(1, 5).GetString());
         Assert.Equal("折扣", ws.Cell(1, 6).GetString());
-        Assert.Equal("成本價", ws.Cell(1, 7).GetString());
-        Assert.Equal("總價", ws.Cell(1, 8).GetString());
-        Assert.Equal("建立時間", ws.Cell(1, 9).GetString());
+        Assert.Equal("上架價格", ws.Cell(1, 7).GetString());
+        Assert.Equal("手續費(%)", ws.Cell(1, 8).GetString());
+        Assert.Equal("成本價", ws.Cell(1, 9).GetString());
+        Assert.Equal("利潤", ws.Cell(1, 10).GetString());
+        Assert.Equal("利潤率(%)", ws.Cell(1, 11).GetString());
+        Assert.Equal("建立時間", ws.Cell(1, 12).GetString());
     }
 
     [Fact]
@@ -70,7 +75,9 @@ public class ExcelExportServiceTests : IDisposable
                 CurrencyId = 1,
                 Currency = new Currency { Id = 1, Code = "JPY", Name = "日圓" },
                 ExchangeRate = 0.22m,
-                Discount = 0.85m
+                Discount = 0.85m,
+                ListingPrice = 500,
+                CommissionFee = 10
             }
         };
 
@@ -85,8 +92,10 @@ public class ExcelExportServiceTests : IDisposable
         Assert.Equal("JPY", ws.Cell(2, 4).GetString());
         Assert.Equal(0.22m, ws.Cell(2, 5).GetValue<decimal>());
         Assert.Equal(0.85m, ws.Cell(2, 6).GetValue<decimal>());
-        Assert.Equal(170m, ws.Cell(2, 7).GetValue<decimal>()); // 200 * 0.85
-        Assert.Equal(187m, ws.Cell(2, 8).GetValue<decimal>()); // 5 * 200 * 0.22 * 0.85
+        Assert.Equal(500m, ws.Cell(2, 7).GetValue<decimal>());
+        Assert.Equal(10m, ws.Cell(2, 8).GetValue<decimal>());
+        // CostPrice = 200*0.22*0.85 + 500*(10/100) = 37.4 + 50 = 87.4
+        Assert.Equal(87.4m, ws.Cell(2, 9).GetValue<decimal>());
     }
 
     [Fact]

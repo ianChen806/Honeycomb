@@ -5,45 +5,75 @@ namespace Honeycomb.Tests.Models;
 public class ProductTests
 {
     [Theory]
-    [InlineData(100, 0.9, 90)]
-    [InlineData(100, 1.0, 100)]
-    [InlineData(250, 0.8, 200)]
-    [InlineData(50, 0.5, 25)]
-    public void CostPrice_ShouldEqual_UnitPrice_Times_Discount(
-        decimal unitPrice, decimal discount, decimal expected)
+    [InlineData(100, 1, 0.9, 0, 15, 90)]
+    [InlineData(100, 31.5, 1.0, 500, 15, 3225)]
+    [InlineData(200, 0.22, 0.85, 1000, 10, 137.4)]
+    public void CostPrice_Calculation(
+        decimal unitPrice, decimal exchangeRate, decimal discount,
+        decimal listingPrice, decimal commissionFee, decimal expected)
     {
         var product = new Product
         {
             Name = "Test",
-            Quantity = 1,
             UnitPrice = unitPrice,
             CurrencyId = 1,
-            ExchangeRate = 1m,
-            Discount = discount
+            ExchangeRate = exchangeRate,
+            Discount = discount,
+            ListingPrice = listingPrice,
+            CommissionFee = commissionFee
         };
 
         Assert.Equal(expected, product.CostPrice);
     }
 
-    [Theory]
-    [InlineData(10, 100, 31.5, 0.9, 28350)]
-    [InlineData(5, 200, 1.0, 1.0, 1000)]
-    [InlineData(1, 100, 30.0, 0.8, 2400)]
-    [InlineData(3, 50, 4.5, 0.9, 607.5)]
-    public void TotalPrice_ShouldEqual_Quantity_Times_UnitPrice_Times_ExchangeRate_Times_Discount(
-        int quantity, decimal unitPrice, decimal exchangeRate, decimal discount, decimal expected)
+    [Fact]
+    public void Profit_ShouldEqual_ListingPrice_Minus_CostPrice()
     {
         var product = new Product
         {
             Name = "Test",
-            Quantity = quantity,
-            UnitPrice = unitPrice,
+            UnitPrice = 100,
             CurrencyId = 1,
-            ExchangeRate = exchangeRate,
-            Discount = discount
+            ExchangeRate = 31.5m,
+            Discount = 0.9m,
+            ListingPrice = 5000,
+            CommissionFee = 15
         };
 
-        Assert.Equal(expected, product.TotalPrice);
+        // CostPrice = 100*31.5*0.9 + 5000*(15/100) = 2835 + 750 = 3585
+        Assert.Equal(1415m, product.Profit);
+    }
+
+    [Fact]
+    public void ProfitMargin_Calculation()
+    {
+        var product = new Product
+        {
+            Name = "Test",
+            UnitPrice = 100,
+            CurrencyId = 1,
+            ExchangeRate = 31.5m,
+            Discount = 0.9m,
+            ListingPrice = 5000,
+            CommissionFee = 15
+        };
+
+        // Profit=1415, ProfitMargin = (1415/5000)*100 = 28.3
+        Assert.Equal(28.3m, product.ProfitMargin);
+    }
+
+    [Fact]
+    public void ProfitMargin_ReturnsZero_WhenListingPriceIsZero()
+    {
+        var product = new Product
+        {
+            Name = "Test",
+            UnitPrice = 100,
+            CurrencyId = 1,
+            ExchangeRate = 1m
+        };
+
+        Assert.Equal(0m, product.ProfitMargin);
     }
 
     [Fact]
@@ -52,7 +82,6 @@ public class ProductTests
         var product = new Product
         {
             Name = "Test",
-            Quantity = 1,
             UnitPrice = 100,
             CurrencyId = 1,
             ExchangeRate = 1m
