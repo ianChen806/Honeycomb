@@ -24,7 +24,7 @@ public partial class ProductListViewModel : ViewModelBase
     private string _newName = string.Empty;
 
     [ObservableProperty]
-    private decimal? _newQuantity;
+    private decimal? _newQuantity = 1;
 
     [ObservableProperty]
     private decimal? _newUnitPrice;
@@ -36,7 +36,13 @@ public partial class ProductListViewModel : ViewModelBase
     private decimal? _newExchangeRate;
 
     [ObservableProperty]
-    private decimal? _newDiscount = 1.0m;
+    private decimal? _newDiscount = 1m;
+
+    [ObservableProperty]
+    private decimal? _newListingPrice;
+
+    [ObservableProperty]
+    private decimal? _newCommissionFee = 15m;
 
     [ObservableProperty]
     private string _errorMessage = string.Empty;
@@ -45,7 +51,10 @@ public partial class ProductListViewModel : ViewModelBase
     private string _costPricePreview = string.Empty;
 
     [ObservableProperty]
-    private string _totalPricePreview = string.Empty;
+    private string _profitPreview = string.Empty;
+
+    [ObservableProperty]
+    private string _profitMarginPreview = string.Empty;
 
     public ProductListViewModel(AppDbContext db, ExcelExportService excelExport, Func<Task<string?>> getSaveFilePath)
     {
@@ -57,16 +66,13 @@ public partial class ProductListViewModel : ViewModelBase
 
     public void LoadData()
     {
+        _db.ChangeTracker.Clear();
         Products.Clear();
-        foreach (var product in _db.Products.Include(p => p.Currency).AsNoTracking().ToList())
-        {
-            Products.Add(product);
-        }
 
         var selectedId = NewCurrency?.Id;
 
         Currencies.Clear();
-        foreach (var currency in _db.Currencies.AsNoTracking().ToList())
+        foreach (var currency in _db.Currencies.ToList())
         {
             Currencies.Add(currency);
         }
@@ -75,35 +81,34 @@ public partial class ProductListViewModel : ViewModelBase
         {
             NewCurrency = Currencies.FirstOrDefault(c => c.Id == id);
         }
+
+        foreach (var product in _db.Products.Include(p => p.Currency).OrderBy(p => p.Name).ToList())
+        {
+            Products.Add(product);
+        }
     }
 
     partial void OnNewUnitPriceChanged(decimal? value) => UpdatePricePreview();
     partial void OnNewDiscountChanged(decimal? value) => UpdatePricePreview();
-    partial void OnNewQuantityChanged(decimal? value) => UpdatePricePreview();
     partial void OnNewExchangeRateChanged(decimal? value) => UpdatePricePreview();
+    partial void OnNewListingPriceChanged(decimal? value) => UpdatePricePreview();
+    partial void OnNewCommissionFeeChanged(decimal? value) => UpdatePricePreview();
 
     private void UpdatePricePreview()
     {
-        if (NewUnitPrice is { } unitPrice && NewDiscount is { } discount)
-        {
-            var costPrice = unitPrice * discount;
-            CostPricePreview = $"成本價: {costPrice:N2}";
+        var unitPrice = NewUnitPrice ?? 0;
+        var exchangeRate = NewExchangeRate ?? 0;
+        var discount = NewDiscount ?? 1;
+        var listingPrice = NewListingPrice ?? 0;
+        var commissionFee = NewCommissionFee ?? 15;
 
-            if (NewQuantity is { } qty && NewExchangeRate is { } rate)
-            {
-                var totalPrice = qty * unitPrice * rate * discount;
-                TotalPricePreview = $"總價: {totalPrice:N2}";
-            }
-            else
-            {
-                TotalPricePreview = string.Empty;
-            }
-        }
-        else
-        {
-            CostPricePreview = string.Empty;
-            TotalPricePreview = string.Empty;
-        }
+        var costPrice = unitPrice * exchangeRate * discount + listingPrice * (commissionFee / 100m);
+        var profit = listingPrice - costPrice;
+        var profitMargin = listingPrice > 0 ? (profit / listingPrice) * 100m : 0;
+
+        CostPricePreview = $"成本價: {costPrice:N2}";
+        ProfitPreview = $"利潤: {profit:N2}";
+        ProfitMarginPreview = $"利潤率: {profitMargin:N2}%";
     }
 
     [RelayCommand]
@@ -147,6 +152,18 @@ public partial class ProductListViewModel : ViewModelBase
             return;
         }
 
+        if (NewListingPrice is not { } listingPrice || listingPrice < 0)
+        {
+            ErrorMessage = "上架價格不能為負數";
+            return;
+        }
+
+        if (NewCommissionFee is not { } commissionFee || commissionFee < 0)
+        {
+            ErrorMessage = "手續費不能為負數";
+            return;
+        }
+
         var product = new Product
         {
             Name = NewName.Trim(),
@@ -155,6 +172,8 @@ public partial class ProductListViewModel : ViewModelBase
             CurrencyId = NewCurrency.Id,
             ExchangeRate = exchangeRate,
             Discount = discount,
+            ListingPrice = listingPrice,
+            CommissionFee = commissionFee,
             CreatedAt = DateTime.Now
         };
 
@@ -162,10 +181,16 @@ public partial class ProductListViewModel : ViewModelBase
         _db.SaveChanges();
 
         NewName = string.Empty;
-        NewQuantity = null;
+        NewQuantity = 1;
         NewUnitPrice = null;
+        NewListingPrice = null;
 
         LoadData();
+    }
+
+    public void SaveProductChanges()
+    {
+        _db.SaveChanges();
     }
 
     public void DeleteProducts(System.Collections.Generic.IReadOnlyList<Product> products)

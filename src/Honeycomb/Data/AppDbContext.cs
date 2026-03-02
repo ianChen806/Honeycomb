@@ -46,10 +46,14 @@ public class AppDbContext : DbContext
         {
             entity.HasKey(p => p.Id);
             entity.Property(p => p.Name).IsRequired().HasMaxLength(200);
-            entity.Property(p => p.Discount).HasDefaultValue(1.0m);
+            entity.Property(p => p.Quantity).HasDefaultValue(1);
+            entity.Property(p => p.Discount).HasDefaultValue(1m);
+            entity.Property(p => p.ListingPrice).HasDefaultValue(0m);
+            entity.Property(p => p.CommissionFee).HasDefaultValue(15m);
             entity.Property(p => p.CreatedAt).HasDefaultValueSql("datetime('now','localtime')");
             entity.Ignore(p => p.CostPrice);
-            entity.Ignore(p => p.TotalPrice);
+            entity.Ignore(p => p.Profit);
+            entity.Ignore(p => p.ProfitMargin);
             entity.HasOne(p => p.Currency)
                   .WithMany()
                   .HasForeignKey(p => p.CurrencyId)

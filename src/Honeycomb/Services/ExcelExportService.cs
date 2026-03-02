@@ -14,7 +14,7 @@ public sealed class ExcelExportService
         var headers = new[]
         {
             "商品名稱", "數量", "單價", "幣別", "匯率",
-            "折扣", "成本價", "總價", "建立時間"
+            "折扣", "上架價格", "手續費(%)", "成本價", "利潤", "利潤率(%)", "建立時間"
         };
 
         for (var col = 0; col < headers.Length; col++)
@@ -35,9 +35,12 @@ public sealed class ExcelExportService
             worksheet.Cell(r, 4).Value = p.Currency?.Code ?? "";
             worksheet.Cell(r, 5).Value = p.ExchangeRate;
             worksheet.Cell(r, 6).Value = p.Discount;
-            worksheet.Cell(r, 7).Value = p.CostPrice;
-            worksheet.Cell(r, 8).Value = p.TotalPrice;
-            worksheet.Cell(r, 9).Value = p.CreatedAt.ToString("yyyy/MM/dd");
+            worksheet.Cell(r, 7).Value = p.ListingPrice;
+            worksheet.Cell(r, 8).Value = p.CommissionFee;
+            worksheet.Cell(r, 9).Value = p.CostPrice;
+            worksheet.Cell(r, 10).Value = p.Profit;
+            worksheet.Cell(r, 11).Value = p.ProfitMargin;
+            worksheet.Cell(r, 12).Value = p.CreatedAt.ToString("yyyy/MM/dd");
         }
 
         var dataRange = worksheet.RangeUsed()!;
