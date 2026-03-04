@@ -18,6 +18,7 @@ public partial class ProductListViewModel : ViewModelBase
     private readonly Func<Task<string?>> _getSaveFilePath;
     private readonly int _categoryId;
 
+    public int CategoryId => _categoryId;
     public ObservableCollection<Product> Products { get; } = [];
     public ObservableCollection<Currency> Currencies { get; } = [];
 
@@ -218,6 +219,34 @@ public partial class ProductListViewModel : ViewModelBase
 
         _db.SaveChanges();
         LoadData();
+    }
+
+    public System.Collections.Generic.List<Category> GetOtherCategories()
+    {
+        return _db.Categories
+            .Where(c => c.Id != _categoryId)
+            .OrderBy(c => c.Id)
+            .ToList();
+    }
+
+    public event Action? ProductsMoved;
+
+    public void MoveProducts(System.Collections.Generic.IReadOnlyList<Product> products, int targetCategoryId)
+    {
+        ErrorMessage = string.Empty;
+
+        foreach (var product in products)
+        {
+            var entity = _db.Products.Find(product.Id);
+            if (entity is not null)
+            {
+                entity.CategoryId = targetCategoryId;
+            }
+        }
+
+        _db.SaveChanges();
+        LoadData();
+        ProductsMoved?.Invoke();
     }
 
     [RelayCommand]

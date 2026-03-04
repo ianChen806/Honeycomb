@@ -1,12 +1,13 @@
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.VisualTree;
 using Honeycomb.Models;
+using Honeycomb.Services;
 using Honeycomb.ViewModels;
 
 namespace Honeycomb.Views;
@@ -25,6 +26,40 @@ public partial class ProductListView : UserControl
         {
             ProductGrid.Columns[0].Sort(ListSortDirection.Ascending);
         }
+
+        RestoreColumnWidths();
+    }
+
+    private void RestoreColumnWidths()
+    {
+        if (DataContext is not ProductListViewModel vm)
+            return;
+
+        var widths = ColumnWidthService.Load(vm.CategoryId);
+        foreach (var col in ProductGrid.Columns)
+        {
+            if (col.Header is string header && widths.TryGetValue(header, out var width) && width >= 10)
+            {
+                col.Width = new DataGridLength(width);
+            }
+        }
+    }
+
+    public void SaveColumnWidths()
+    {
+        if (DataContext is not ProductListViewModel vm)
+            return;
+
+        var widths = new Dictionary<string, double>();
+        foreach (var col in ProductGrid.Columns)
+        {
+            if (col.Header is string header)
+            {
+                widths[header] = col.ActualWidth;
+            }
+        }
+
+        ColumnWidthService.Save(vm.CategoryId, widths);
     }
 
     private void OnCellEditEnding(object? sender, DataGridCellEditEndingEventArgs e)
@@ -60,6 +95,35 @@ public partial class ProductListView : UserControl
         if (selected.Count > 0)
         {
             vm.DeleteProducts(selected);
+        }
+    }
+
+    private async void OnMoveCategoryClicked(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is not ProductListViewModel vm)
+            return;
+
+        var selected = ProductGrid.SelectedItems
+            .OfType<Product>()
+            .ToList();
+
+        if (selected.Count == 0)
+            return;
+
+        var categories = vm.GetOtherCategories();
+        if (categories.Count == 0)
+            return;
+
+        var parentWindow = this.FindAncestorOfType<Window>();
+        if (parentWindow is null)
+            return;
+
+        var dialog = new MoveCategoryDialog(categories);
+        await dialog.ShowDialog(parentWindow);
+
+        if (dialog.SelectedCategory is { } target)
+        {
+            vm.MoveProducts(selected, target.Id);
         }
     }
 }

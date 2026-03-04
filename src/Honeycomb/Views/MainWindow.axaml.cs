@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Specialized;
 using System.IO;
+using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Avalonia;
@@ -20,7 +21,11 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
         Loaded += OnLoaded;
-        Closing += (_, _) => SaveWindowSize();
+        Closing += (_, _) =>
+        {
+            SaveWindowSize();
+            SaveAllColumnWidths();
+        };
     }
 
     private void OnLoaded(object? sender, RoutedEventArgs e)
@@ -198,6 +203,31 @@ public partial class MainWindow : Window
 
         await dialog.ShowDialog(this);
         return result;
+    }
+
+    private TabItem? _previousTab;
+
+    private void OnTabSelectionChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        if (MainTabControl is null) return;
+
+        if (_previousTab?.Content is ProductListView prevView)
+        {
+            prevView.SaveColumnWidths();
+        }
+
+        _previousTab = MainTabControl.SelectedItem as TabItem;
+    }
+
+    private void SaveAllColumnWidths()
+    {
+        foreach (var item in MainTabControl.Items.OfType<TabItem>())
+        {
+            if (item.Content is ProductListView view)
+            {
+                view.SaveColumnWidths();
+            }
+        }
     }
 
     private void SaveWindowSize()

@@ -50,6 +50,7 @@ public partial class MainWindowViewModel : ViewModelBase
         foreach (var category in _db.Categories.OrderBy(c => c.Id).ToList())
         {
             var productList = new ProductListViewModel(_db, _excelExport, _getSaveFilePath, category.Id);
+            productList.ProductsMoved += ReloadAllProductLists;
             CategoryTabs.Add(new CategoryTabItem(category.Id, category.Name, productList));
         }
     }

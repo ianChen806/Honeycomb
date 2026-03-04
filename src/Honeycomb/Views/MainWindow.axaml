@@ -26,7 +26,8 @@
 
         <!-- Tab Area -->
         <TabControl Margin="8" SelectedItem="{Binding SelectedTab}"
-                    Name="MainTabControl">
+                    Name="MainTabControl"
+                    SelectionChanged="OnTabSelectionChanged">
 
             <!-- Dynamic Category Tabs -->
             <TabControl.Styles>

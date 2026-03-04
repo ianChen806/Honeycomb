@@ -1,0 +1,25 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:models="using:Honeycomb.Models"
+        x:Class="Honeycomb.Views.MoveCategoryDialog"
+        Title="移動到分類"
+        Width="360" Height="180"
+        WindowStartupLocation="CenterOwner"
+        CanResize="False">
+
+    <StackPanel Margin="16" Spacing="12">
+        <TextBlock Text="請選擇目標分類："/>
+        <ComboBox Name="CategoryComboBox" HorizontalAlignment="Stretch">
+            <ComboBox.ItemTemplate>
+                <DataTemplate x:DataType="models:Category">
+                    <TextBlock Text="{Binding Name}"/>
+                </DataTemplate>
+            </ComboBox.ItemTemplate>
+        </ComboBox>
+        <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+            <Button Content="確定" Name="OkButton" Click="OnOkClicked"/>
+            <Button Content="取消" Click="OnCancelClicked"/>
+        </StackPanel>
+    </StackPanel>
+
+</Window>

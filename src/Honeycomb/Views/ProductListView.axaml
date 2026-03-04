@@ -72,14 +72,18 @@
                   AutoGenerateColumns="False"
                   IsReadOnly="False"
                   CanUserSortColumns="True"
+                  CanUserResizeColumns="True"
                   CellEditEnding="OnCellEditEnding">
+            <DataGrid.Resources>
+                <x:Double x:Key="DataGridSortIconMinWidth">12</x:Double>
+            </DataGrid.Resources>
             <DataGrid.Styles>
                 <Style Selector="DataGridRow:nth-child(even)">
                     <Setter Property="Background" Value="{DynamicResource SystemListLowColor}"/>
                 </Style>
             </DataGrid.Styles>
             <DataGrid.Columns>
-                <DataGridTextColumn Header="商品名稱" Binding="{Binding Name}" Width="*"/>
+                <DataGridTextColumn Header="商品名稱" Binding="{Binding Name}" Width="200"/>
                 <DataGridTextColumn Header="單價" Binding="{Binding UnitPrice, StringFormat=N2}" Width="100"/>
                 <DataGridTemplateColumn Header="幣別" Width="100" SortMemberPath="Currency.Code">
                     <DataGridTemplateColumn.CellTemplate>
@@ -115,6 +119,7 @@
         <!-- Bottom Bar -->
         <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="8" Margin="0,16,0,0">
             <Button Content="刪除選取的商品" Click="OnDeleteClicked"/>
+            <Button Content="移動到分類" Click="OnMoveCategoryClicked"/>
             <TextBlock Text="{Binding ErrorMessage}" Foreground="Red" VerticalAlignment="Center"/>
         </StackPanel>
 
