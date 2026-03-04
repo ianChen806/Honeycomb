@@ -9,6 +9,7 @@ public class AppDbContext : DbContext
 {
     public DbSet<Currency> Currencies => Set<Currency>();
     public DbSet<Product> Products => Set<Product>();
+    public DbSet<Category> Categories => Set<Category>();
 
     public string DbPath { get; }
 
@@ -42,11 +43,19 @@ public class AppDbContext : DbContext
             entity.Property(c => c.Name).IsRequired().HasMaxLength(50);
         });
 
+        modelBuilder.Entity<Category>(entity =>
+        {
+            entity.HasKey(c => c.Id);
+            entity.HasIndex(c => c.Name).IsUnique();
+            entity.Property(c => c.Name).IsRequired().HasMaxLength(100);
+            entity.HasData(new Category { Id = 1, Name = "預設" });
+        });
+
         modelBuilder.Entity<Product>(entity =>
         {
             entity.HasKey(p => p.Id);
             entity.Property(p => p.Name).IsRequired().HasMaxLength(200);
-            entity.Property(p => p.Quantity).HasDefaultValue(1);
+            entity.Property(p => p.ExtraCost).HasDefaultValue(0m);
             entity.Property(p => p.Discount).HasDefaultValue(1m);
             entity.Property(p => p.ListingPrice).HasDefaultValue(0m);
             entity.Property(p => p.CommissionFee).HasDefaultValue(15m);
@@ -57,6 +66,11 @@ public class AppDbContext : DbContext
             entity.HasOne(p => p.Currency)
                   .WithMany()
                   .HasForeignKey(p => p.CurrencyId)
+                  .OnDelete(DeleteBehavior.Restrict);
+            entity.Property(p => p.CategoryId).HasDefaultValue(1);
+            entity.HasOne(p => p.Category)
+                  .WithMany()
+                  .HasForeignKey(p => p.CategoryId)
                   .OnDelete(DeleteBehavior.Restrict);
         });
     }

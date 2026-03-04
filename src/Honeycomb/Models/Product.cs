@@ -11,7 +11,7 @@ public partial class Product : ObservableObject
     private string _name = string.Empty;
 
     [ObservableProperty]
-    private int _quantity = 1;
+    private decimal _extraCost;
 
     [ObservableProperty]
     private decimal _unitPrice;
@@ -34,12 +34,19 @@ public partial class Product : ObservableObject
     [ObservableProperty]
     private decimal _commissionFee = 15m;
 
-    public decimal CostPrice => UnitPrice * ExchangeRate * Discount + ListingPrice * (CommissionFee / 100m);
+    public decimal CostPrice => UnitPrice * ExchangeRate * Discount + ListingPrice * (CommissionFee / 100m) + ExtraCost;
     public decimal Profit => ListingPrice - CostPrice;
     public decimal ProfitMargin => ListingPrice > 0 ? (Profit / ListingPrice) * 100m : 0m;
 
+    [ObservableProperty]
+    private int _categoryId = 1;
+
+    [ObservableProperty]
+    private Category? _category;
+
     public DateTime CreatedAt { get; set; } = DateTime.Now;
 
+    partial void OnExtraCostChanged(decimal value) => NotifyComputedProperties();
     partial void OnUnitPriceChanged(decimal value) => NotifyComputedProperties();
     partial void OnExchangeRateChanged(decimal value) => NotifyComputedProperties();
     partial void OnDiscountChanged(decimal value) => NotifyComputedProperties();

@@ -18,10 +18,6 @@
                     <TextBox Watermark="商品名稱" Text="{Binding NewName}" Width="150"/>
                 </StackPanel>
                 <StackPanel Margin="0,0,8,8">
-                    <TextBlock Text="數量" Margin="0,0,0,4"/>
-                    <NumericUpDown Value="{Binding NewQuantity}" Minimum="1" Increment="1" FormatString="0" ShowButtonSpinner="False" Width="80"/>
-                </StackPanel>
-                <StackPanel Margin="0,0,8,8">
                     <TextBlock Text="單價" Margin="0,0,0,4"/>
                     <NumericUpDown Value="{Binding NewUnitPrice}" Minimum="0" Increment="1" FormatString="N2" ShowButtonSpinner="False" Width="100"/>
                 </StackPanel>
@@ -40,6 +36,10 @@
                 <StackPanel Margin="0,0,8,8">
                     <TextBlock Text="匯率" Margin="0,0,0,4"/>
                     <NumericUpDown Value="{Binding NewExchangeRate}" Minimum="0" Increment="0.01" FormatString="N2" ShowButtonSpinner="False" Width="100"/>
+                </StackPanel>
+                <StackPanel Margin="0,0,8,8">
+                    <TextBlock Text="額外成本" Margin="0,0,0,4"/>
+                    <NumericUpDown Value="{Binding NewExtraCost}" Minimum="0" Increment="10" FormatString="N0" ShowButtonSpinner="False" Width="100"/>
                 </StackPanel>
                 <StackPanel Margin="0,0,8,8">
                     <TextBlock Text="折扣" Margin="0,0,0,4"/>
@@ -73,9 +73,13 @@
                   IsReadOnly="False"
                   CanUserSortColumns="True"
                   CellEditEnding="OnCellEditEnding">
+            <DataGrid.Styles>
+                <Style Selector="DataGridRow:nth-child(even)">
+                    <Setter Property="Background" Value="{DynamicResource SystemListLowColor}"/>
+                </Style>
+            </DataGrid.Styles>
             <DataGrid.Columns>
                 <DataGridTextColumn Header="商品名稱" Binding="{Binding Name}" Width="*"/>
-                <DataGridTextColumn Header="數量" Binding="{Binding Quantity}" Width="80"/>
                 <DataGridTextColumn Header="單價" Binding="{Binding UnitPrice, StringFormat=N2}" Width="100"/>
                 <DataGridTemplateColumn Header="幣別" Width="100" SortMemberPath="Currency.Code">
                     <DataGridTemplateColumn.CellTemplate>
@@ -97,12 +101,13 @@
                     </DataGridTemplateColumn.CellEditingTemplate>
                 </DataGridTemplateColumn>
                 <DataGridTextColumn Header="匯率" Binding="{Binding ExchangeRate, StringFormat=N2}" Width="100"/>
+                <DataGridTextColumn Header="額外成本" Binding="{Binding ExtraCost, StringFormat=N0}" Width="100"/>
                 <DataGridTextColumn Header="折扣" Binding="{Binding Discount, StringFormat=N2}" Width="80"/>
                 <DataGridTextColumn Header="上架價格" Binding="{Binding ListingPrice, StringFormat=0}" Width="100"/>
                 <DataGridTextColumn Header="手續費(%)" Binding="{Binding CommissionFee, StringFormat=0}" Width="80"/>
                 <DataGridTextColumn Header="成本價" Binding="{Binding CostPrice, StringFormat=N2}" Width="100" IsReadOnly="True"/>
                 <DataGridTextColumn Header="利潤" Binding="{Binding Profit, StringFormat=N2}" Width="100" IsReadOnly="True"/>
-                <DataGridTextColumn Header="利潤率(%)" Binding="{Binding ProfitMargin, StringFormat=N2}" Width="80" IsReadOnly="True"/>
+                <DataGridTextColumn Header="利潤率(%)" Binding="{Binding ProfitMargin, StringFormat={}{0:N2}%}" Width="80" IsReadOnly="True"/>
                 <DataGridTextColumn Header="建立時間" Binding="{Binding CreatedAt, StringFormat=yyyy/MM/dd}" Width="120" IsReadOnly="True"/>
             </DataGrid.Columns>
         </DataGrid>
@@ -110,7 +115,6 @@
         <!-- Bottom Bar -->
         <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="8" Margin="0,16,0,0">
             <Button Content="刪除選取的商品" Click="OnDeleteClicked"/>
-            <Button Content="匯出 Excel" Command="{Binding ExportExcelCommand}"/>
             <TextBlock Text="{Binding ErrorMessage}" Foreground="Red" VerticalAlignment="Center"/>
         </StackPanel>
 

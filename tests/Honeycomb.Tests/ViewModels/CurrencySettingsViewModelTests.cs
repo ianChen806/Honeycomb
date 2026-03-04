@@ -97,10 +97,11 @@ public class CurrencySettingsViewModelTests : IDisposable
         _db.Products.Add(new Product
         {
             Name = "Test",
-            Quantity = 1,
+            ExtraCost = 0,
             UnitPrice = 100m,
             CurrencyId = currency.Id,
-            ExchangeRate = 0.22m
+            ExchangeRate = 0.22m,
+            CategoryId = 1
         });
         _db.SaveChanges();
 

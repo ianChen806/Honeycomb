@@ -4,20 +4,37 @@
         xmlns:views="using:Honeycomb.Views"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="600"
+        mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="650"
         x:Class="Honeycomb.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
-        Icon="/Assets/avalonia-logo.ico"
+        Icon="/Assets/honeycomb.ico"
         Title="Honeycomb - 庫存管理系統"
         Width="960" Height="640">
 
-    <TabControl Margin="8">
-        <TabItem Header="商品列表">
-            <views:ProductListView DataContext="{Binding ProductList}"/>
-        </TabItem>
-        <TabItem Header="幣別設定">
-            <views:CurrencySettingsView DataContext="{Binding CurrencySettings}"/>
-        </TabItem>
-    </TabControl>
+    <DockPanel>
+        <!-- Category Management Bar -->
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="8" Margin="12,8,12,0">
+            <Button Content="＋ 新增分類"
+                    Click="OnAddCategoryClicked"/>
+            <Button Content="匯出 Excel"
+                    Command="{Binding ExportAllExcelCommand}"/>
+            <TextBlock Text="{Binding CategoryManager.ErrorMessage}"
+                       Foreground="Red" VerticalAlignment="Center" Margin="8,0,0,0"/>
+            <TextBlock Text="{Binding ExportErrorMessage}"
+                       Foreground="Red" VerticalAlignment="Center" Margin="8,0,0,0"/>
+        </StackPanel>
+
+        <!-- Tab Area -->
+        <TabControl Margin="8" SelectedItem="{Binding SelectedTab}"
+                    Name="MainTabControl">
+
+            <!-- Dynamic Category Tabs -->
+            <TabControl.Styles>
+                <Style Selector="TabItem">
+                    <Setter Property="Padding" Value="12,6"/>
+                </Style>
+            </TabControl.Styles>
+        </TabControl>
+    </DockPanel>
 
 </Window>

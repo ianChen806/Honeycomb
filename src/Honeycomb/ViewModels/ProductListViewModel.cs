@@ -16,6 +16,7 @@ public partial class ProductListViewModel : ViewModelBase
     private readonly AppDbContext _db;
     private readonly ExcelExportService _excelExport;
     private readonly Func<Task<string?>> _getSaveFilePath;
+    private readonly int _categoryId;
 
     public ObservableCollection<Product> Products { get; } = [];
     public ObservableCollection<Currency> Currencies { get; } = [];
@@ -24,7 +25,7 @@ public partial class ProductListViewModel : ViewModelBase
     private string _newName = string.Empty;
 
     [ObservableProperty]
-    private decimal? _newQuantity = 1;
+    private decimal? _newExtraCost = 0;
 
     [ObservableProperty]
     private decimal? _newUnitPrice;
@@ -56,11 +57,12 @@ public partial class ProductListViewModel : ViewModelBase
     [ObservableProperty]
     private string _profitMarginPreview = string.Empty;
 
-    public ProductListViewModel(AppDbContext db, ExcelExportService excelExport, Func<Task<string?>> getSaveFilePath)
+    public ProductListViewModel(AppDbContext db, ExcelExportService excelExport, Func<Task<string?>> getSaveFilePath, int categoryId = 1)
     {
         _db = db;
         _excelExport = excelExport;
         _getSaveFilePath = getSaveFilePath;
+        _categoryId = categoryId;
         LoadData();
     }
 
@@ -82,12 +84,16 @@ public partial class ProductListViewModel : ViewModelBase
             NewCurrency = Currencies.FirstOrDefault(c => c.Id == id);
         }
 
-        foreach (var product in _db.Products.Include(p => p.Currency).OrderBy(p => p.Name).ToList())
+        var query = _db.Products.Include(p => p.Currency)
+            .Where(p => p.CategoryId == _categoryId);
+
+        foreach (var product in query.OrderBy(p => p.Name).ToList())
         {
             Products.Add(product);
         }
     }
 
+    partial void OnNewExtraCostChanged(decimal? value) => UpdatePricePreview();
     partial void OnNewUnitPriceChanged(decimal? value) => UpdatePricePreview();
     partial void OnNewDiscountChanged(decimal? value) => UpdatePricePreview();
     partial void OnNewExchangeRateChanged(decimal? value) => UpdatePricePreview();
@@ -102,7 +108,9 @@ public partial class ProductListViewModel : ViewModelBase
         var listingPrice = NewListingPrice ?? 0;
         var commissionFee = NewCommissionFee ?? 15;
 
-        var costPrice = unitPrice * exchangeRate * discount + listingPrice * (commissionFee / 100m);
+        var extraCost = NewExtraCost ?? 0;
+
+        var costPrice = unitPrice * exchangeRate * discount + listingPrice * (commissionFee / 100m) + extraCost;
         var profit = listingPrice - costPrice;
         var profitMargin = listingPrice > 0 ? (profit / listingPrice) * 100m : 0;
 
@@ -122,9 +130,9 @@ public partial class ProductListViewModel : ViewModelBase
             return;
         }
 
-        if (NewQuantity is not { } quantity || quantity <= 0)
+        if (NewExtraCost is not { } extraCost || extraCost < 0)
         {
-            ErrorMessage = "數量必須為正整數";
+            ErrorMessage = "額外成本不能為負數";
             return;
         }
 
@@ -167,13 +175,15 @@ public partial class ProductListViewModel : ViewModelBase
         var product = new Product
         {
             Name = NewName.Trim(),
-            Quantity = (int)quantity,
+            ExtraCost = extraCost,
             UnitPrice = unitPrice,
             CurrencyId = NewCurrency.Id,
             ExchangeRate = exchangeRate,
             Discount = discount,
             ListingPrice = listingPrice,
             CommissionFee = commissionFee,
+            CategoryId = _categoryId,
+
             CreatedAt = DateTime.Now
         };
 
@@ -181,7 +191,7 @@ public partial class ProductListViewModel : ViewModelBase
         _db.SaveChanges();
 
         NewName = string.Empty;
-        NewQuantity = 1;
+        NewExtraCost = 0;
         NewUnitPrice = null;
         NewListingPrice = null;
 
