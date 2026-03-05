@@ -48,7 +48,8 @@ public class AppDbContext : DbContext
             entity.HasKey(c => c.Id);
             entity.HasIndex(c => c.Name).IsUnique();
             entity.Property(c => c.Name).IsRequired().HasMaxLength(100);
-            entity.HasData(new Category { Id = 1, Name = "預設" });
+            entity.Property(c => c.SortOrder).HasDefaultValue(0);
+            entity.HasData(new Category { Id = 1, Name = "預設", SortOrder = 0 });
         });
 
         modelBuilder.Entity<Product>(entity =>

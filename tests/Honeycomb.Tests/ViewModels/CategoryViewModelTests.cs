@@ -149,6 +149,88 @@ public class CategoryViewModelTests : IDisposable
     }
 
     [Fact]
+    public void ReorderCategory_MovesToNewPosition()
+    {
+        _db.Categories.Add(new Category { Name = "A", SortOrder = 1 });
+        _db.Categories.Add(new Category { Name = "B", SortOrder = 2 });
+        _db.Categories.Add(new Category { Name = "C", SortOrder = 3 });
+        _db.SaveChanges();
+
+        var vm = new CategoryViewModel(_db);
+        // Categories: 預設(0), A(1), B(2), C(3)
+        var categoryC = vm.Categories.First(c => c.Name == "C");
+
+        vm.ReorderCategory(categoryC.Id, 1); // Move C to index 1
+
+        // Expected order: 預設(0), C(1), A(2), B(3)
+        Assert.Equal("預設", vm.Categories[0].Name);
+        Assert.Equal("C", vm.Categories[1].Name);
+        Assert.Equal("A", vm.Categories[2].Name);
+        Assert.Equal("B", vm.Categories[3].Name);
+    }
+
+    [Fact]
+    public void ReorderCategory_SamePosition_NoChange()
+    {
+        _db.Categories.Add(new Category { Name = "A", SortOrder = 1 });
+        _db.Categories.Add(new Category { Name = "B", SortOrder = 2 });
+        _db.SaveChanges();
+
+        var vm = new CategoryViewModel(_db);
+        var categoryA = vm.Categories.First(c => c.Name == "A");
+
+        vm.ReorderCategory(categoryA.Id, 1);
+
+        Assert.Equal("預設", vm.Categories[0].Name);
+        Assert.Equal("A", vm.Categories[1].Name);
+        Assert.Equal("B", vm.Categories[2].Name);
+    }
+
+    [Fact]
+    public void ReorderCategory_FiresCategoriesChangedEvent()
+    {
+        _db.Categories.Add(new Category { Name = "A", SortOrder = 1 });
+        _db.SaveChanges();
+
+        var vm = new CategoryViewModel(_db);
+        var fired = false;
+        vm.CategoriesChanged += () => fired = true;
+
+        var categoryA = vm.Categories.First(c => c.Name == "A");
+        vm.ReorderCategory(categoryA.Id, 0);
+
+        Assert.True(fired);
+    }
+
+    [Fact]
+    public void AddCategory_AssignsCorrectSortOrder()
+    {
+        _db.Categories.Add(new Category { Name = "A", SortOrder = 1 });
+        _db.SaveChanges();
+
+        var vm = new CategoryViewModel(_db);
+        vm.NewCategoryName = "B";
+        vm.AddCategoryCommand.Execute(null);
+
+        var newCategory = _db.Categories.First(c => c.Name == "B");
+        Assert.Equal(2, newCategory.SortOrder);
+    }
+
+    [Fact]
+    public void LoadCategories_OrderedBySortOrder()
+    {
+        _db.Categories.Add(new Category { Name = "Z", SortOrder = 1 });
+        _db.Categories.Add(new Category { Name = "A", SortOrder = 2 });
+        _db.SaveChanges();
+
+        var vm = new CategoryViewModel(_db);
+
+        Assert.Equal("預設", vm.Categories[0].Name);
+        Assert.Equal("Z", vm.Categories[1].Name);
+        Assert.Equal("A", vm.Categories[2].Name);
+    }
+
+    [Fact]
     public void AddCategory_FiresCategoriesChangedEvent()
     {
         var vm = new CategoryViewModel(_db);

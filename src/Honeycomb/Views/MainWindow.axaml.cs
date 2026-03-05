@@ -6,6 +6,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using Honeycomb.ViewModels;
 
@@ -73,6 +74,12 @@ public partial class MainWindow : Window
                 menu.Items.Add(deleteItem);
             }
 
+            // Drag-and-drop reorder
+            tabItem.PointerPressed += OnTabPointerPressed;
+            DragDrop.SetAllowDrop(tabItem, true);
+            tabItem.AddHandler(DragDrop.DragOverEvent, OnTabDragOver);
+            tabItem.AddHandler(DragDrop.DropEvent, OnTabDrop);
+
             tabItem.ContextMenu = menu;
             MainTabControl.Items.Add(tabItem);
         }
@@ -87,6 +94,67 @@ public partial class MainWindow : Window
 
         if (MainTabControl.Items.Count > 0)
             MainTabControl.SelectedIndex = 0;
+    }
+
+    private Point _dragStartPoint;
+    private bool _isDragStarting;
+
+    private async void OnTabPointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (sender is not TabItem tabItem || tabItem.Tag is not CategoryTabItem) return;
+        if (!e.GetCurrentPoint(tabItem).Properties.IsLeftButtonPressed) return;
+
+        _dragStartPoint = e.GetPosition(tabItem);
+        _isDragStarting = true;
+
+        // Use PointerMoved to detect drag threshold
+        tabItem.PointerMoved += OnTabPointerMoved;
+    }
+
+    private async void OnTabPointerMoved(object? sender, PointerEventArgs e)
+    {
+        if (sender is not TabItem tabItem || !_isDragStarting) return;
+
+        var currentPos = e.GetPosition(tabItem);
+        var delta = currentPos - _dragStartPoint;
+
+        if (Math.Abs(delta.X) < 10 && Math.Abs(delta.Y) < 10) return;
+
+        _isDragStarting = false;
+        tabItem.PointerMoved -= OnTabPointerMoved;
+
+        var data = new DataObject();
+        data.Set("CategoryTabItem", tabItem.Tag!);
+        await DragDrop.DoDragDrop(e, data, DragDropEffects.Move);
+    }
+
+    private void OnTabDragOver(object? sender, DragEventArgs e)
+    {
+        if (!e.Data.Contains("CategoryTabItem"))
+        {
+            e.DragEffects = DragDropEffects.None;
+            return;
+        }
+
+        e.DragEffects = DragDropEffects.Move;
+    }
+
+    private void OnTabDrop(object? sender, DragEventArgs e)
+    {
+        if (DataContext is not MainWindowViewModel vm) return;
+        if (sender is not TabItem targetTabItem || targetTabItem.Tag is not CategoryTabItem targetTab) return;
+        if (!e.Data.Contains("CategoryTabItem")) return;
+
+#pragma warning disable CS0618 // Avalonia DragDrop API obsolete warnings
+        var sourceTab = e.Data.Get("CategoryTabItem") as CategoryTabItem;
+#pragma warning restore CS0618
+        if (sourceTab is null || sourceTab.CategoryId == targetTab.CategoryId) return;
+
+        // Find target index among category tabs
+        var targetIndex = vm.CategoryTabs.IndexOf(targetTab);
+        if (targetIndex < 0) return;
+
+        vm.CategoryManager.ReorderCategory(sourceTab.CategoryId, targetIndex);
     }
 
     private CategoryTabItem? GetSelectedCategoryTab()

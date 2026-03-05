@@ -47,7 +47,7 @@ public partial class MainWindowViewModel : ViewModelBase
         CategoryTabs.Clear();
 
         // Default category (Id=1) is included naturally via the database seed
-        foreach (var category in _db.Categories.OrderBy(c => c.Id).ToList())
+        foreach (var category in _db.Categories.OrderBy(c => c.SortOrder).ToList())
         {
             var productList = new ProductListViewModel(_db, _excelExport, _getSaveFilePath, category.Id);
             productList.ProductsMoved += ReloadAllProductLists;

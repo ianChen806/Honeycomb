@@ -32,7 +32,7 @@ public partial class CategoryViewModel : ViewModelBase
     public void LoadCategories()
     {
         Categories.Clear();
-        foreach (var category in _db.Categories.AsNoTracking().OrderBy(c => c.Name).ToList())
+        foreach (var category in _db.Categories.AsNoTracking().OrderBy(c => c.SortOrder).ToList())
         {
             Categories.Add(category);
         }
@@ -56,7 +56,8 @@ public partial class CategoryViewModel : ViewModelBase
             return;
         }
 
-        _db.Categories.Add(new Category { Name = name });
+        var maxSortOrder = _db.Categories.Any() ? _db.Categories.Max(c => c.SortOrder) : -1;
+        _db.Categories.Add(new Category { Name = name, SortOrder = maxSortOrder + 1 });
         _db.SaveChanges();
 
         NewCategoryName = string.Empty;
@@ -86,6 +87,26 @@ public partial class CategoryViewModel : ViewModelBase
         _db.Categories.Remove(entity);
         _db.SaveChanges();
 
+        LoadCategories();
+        CategoriesChanged?.Invoke();
+    }
+
+    public void ReorderCategory(int categoryId, int newIndex)
+    {
+        var categories = _db.Categories.OrderBy(c => c.SortOrder).ToList();
+        var item = categories.Find(c => c.Id == categoryId);
+        if (item is null) return;
+
+        categories.Remove(item);
+        var clampedIndex = Math.Clamp(newIndex, 0, categories.Count);
+        categories.Insert(clampedIndex, item);
+
+        for (var i = 0; i < categories.Count; i++)
+        {
+            categories[i].SortOrder = i;
+        }
+
+        _db.SaveChanges();
         LoadCategories();
         CategoriesChanged?.Invoke();
     }
