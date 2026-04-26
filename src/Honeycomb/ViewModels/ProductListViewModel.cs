@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
@@ -57,6 +58,18 @@ public partial class ProductListViewModel : ViewModelBase
 
     [ObservableProperty]
     private string _profitMarginPreview = string.Empty;
+
+    [ObservableProperty]
+    private string _searchQuery = string.Empty;
+
+    [ObservableProperty]
+    private bool _isSearchVisible;
+
+    [ObservableProperty]
+    private string _matchCountText = "0/0";
+
+    private List<Product> _matches = [];
+    private int _currentMatchIndex = -1;
 
     public ProductListViewModel(AppDbContext db, ExcelExportService excelExport, Func<Task<string?>> getSaveFilePath, int categoryId = 1)
     {
@@ -266,5 +279,40 @@ public partial class ProductListViewModel : ViewModelBase
 
         var products = _db.Products.Include(p => p.Currency).AsNoTracking().ToList();
         _excelExport.Export(products, filePath);
+    }
+
+    partial void OnSearchQueryChanged(string value)
+    {
+        RecomputeMatches();
+    }
+
+    private void RecomputeMatches()
+    {
+        if (string.IsNullOrEmpty(SearchQuery))
+        {
+            _matches = [];
+            _currentMatchIndex = -1;
+            MatchCountText = "0/0";
+            return;
+        }
+
+        _matches = Products
+            .Where(p => p.Name.Contains(SearchQuery, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        _currentMatchIndex = _matches.Count > 0 ? 0 : -1;
+        UpdateMatchCountText();
+    }
+
+    private void UpdateMatchCountText()
+    {
+        if (_matches.Count == 0)
+        {
+            MatchCountText = "0/0";
+        }
+        else
+        {
+            MatchCountText = $"{_currentMatchIndex + 1}/{_matches.Count}";
+        }
     }
 }

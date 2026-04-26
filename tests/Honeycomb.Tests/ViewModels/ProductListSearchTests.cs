@@ -1,0 +1,110 @@
+using Honeycomb.Data;
+using Honeycomb.Models;
+using Honeycomb.Services;
+using Honeycomb.ViewModels;
+using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
+
+namespace Honeycomb.Tests.ViewModels;
+
+public class ProductListSearchTests : IDisposable
+{
+    private readonly SqliteConnection _connection;
+    private readonly AppDbContext _db;
+
+    public ProductListSearchTests()
+    {
+        _connection = new SqliteConnection("Data Source=:memory:");
+        _connection.Open();
+
+        var options = new DbContextOptionsBuilder<AppDbContext>()
+            .UseSqlite(_connection)
+            .Options;
+
+        _db = new AppDbContext(options);
+        _db.Database.EnsureCreated();
+
+        _db.Currencies.Add(new Currency { Code = "TWD", Name = "新台幣" });
+        _db.SaveChanges();
+    }
+
+    public void Dispose()
+    {
+        _db.Dispose();
+        _connection.Dispose();
+    }
+
+    private ProductListViewModel CreateVm(int categoryId = 1)
+    {
+        return new ProductListViewModel(
+            _db,
+            new ExcelExportService(),
+            () => Task.FromResult<string?>(null),
+            categoryId);
+    }
+
+    private void AddProduct(string name, int categoryId = 1)
+    {
+        var currency = _db.Currencies.First();
+        _db.Products.Add(new Product
+        {
+            Name = name,
+            UnitPrice = 100,
+            CurrencyId = currency.Id,
+            ExchangeRate = 1,
+            Discount = 1,
+            ListingPrice = 200,
+            CommissionFee = 10,
+            CategoryId = categoryId,
+            CreatedAt = DateTime.Now
+        });
+        _db.SaveChanges();
+    }
+
+    [Fact]
+    public void EmptyQuery_ClearsMatchCount()
+    {
+        AddProduct("Widget A");
+        var vm = CreateVm(1);
+
+        vm.SearchQuery = "";
+
+        Assert.Equal("0/0", vm.MatchCountText);
+    }
+
+    [Fact]
+    public void NoMatch_SetsCountToZero()
+    {
+        AddProduct("Widget A");
+        var vm = CreateVm(1);
+
+        vm.SearchQuery = "zzz";
+
+        Assert.Equal("0/0", vm.MatchCountText);
+    }
+
+    [Fact]
+    public void SingleMatch_SetsCountToOneOfOne()
+    {
+        AddProduct("Widget A");
+        AddProduct("Other");
+        var vm = CreateVm(1);
+
+        vm.SearchQuery = "Widget";
+
+        Assert.Equal("1/1", vm.MatchCountText);
+    }
+
+    [Fact]
+    public void MultipleMatches_OrderedByProductsCollection()
+    {
+        AddProduct("Widget A");
+        AddProduct("Widget B");
+        AddProduct("Other");
+        var vm = CreateVm(1);
+
+        vm.SearchQuery = "Widget";
+
+        Assert.Equal("1/2", vm.MatchCountText);
+    }
+}
