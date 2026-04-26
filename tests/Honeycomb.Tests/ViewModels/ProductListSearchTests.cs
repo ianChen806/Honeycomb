@@ -191,4 +191,26 @@ public class ProductListSearchTests : IDisposable
         Assert.Equal(string.Empty, vm.SearchQuery);
         Assert.Equal("0/0", vm.MatchCountText);
     }
+
+    [Fact]
+    public void OpenSearchCommand_SetsIsSearchVisibleTrue()
+    {
+        var vm = CreateVm(1);
+        Assert.False(vm.IsSearchVisible);
+
+        vm.OpenSearchCommand.Execute(null);
+
+        Assert.True(vm.IsSearchVisible);
+    }
+
+    [Fact]
+    public void CloseSearch_SetsIsSearchVisibleFalse()
+    {
+        var vm = CreateVm(1);
+        vm.OpenSearchCommand.Execute(null);
+
+        vm.CloseSearch();
+
+        Assert.False(vm.IsSearchVisible);
+    }
 }

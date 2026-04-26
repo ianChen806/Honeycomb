@@ -135,6 +135,17 @@ public partial class ProductListViewModel : ViewModelBase
     }
 
     [RelayCommand]
+    private void OpenSearch()
+    {
+        IsSearchVisible = true;
+    }
+
+    public void CloseSearch()
+    {
+        IsSearchVisible = false;
+    }
+
+    [RelayCommand]
     private void AddProduct()
     {
         ErrorMessage = string.Empty;
