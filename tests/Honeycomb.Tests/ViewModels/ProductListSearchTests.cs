@@ -166,4 +166,29 @@ public class ProductListSearchTests : IDisposable
         Assert.NotNull(scrolled);
         Assert.Equal("Widget B", scrolled!.Name);
     }
+
+    [Fact]
+    public void CaseInsensitive_MatchesRegardlessOfCase()
+    {
+        AddProduct("Widget A");
+        var vm = CreateVm(1);
+
+        vm.SearchQuery = "widget";
+
+        Assert.Equal("1/1", vm.MatchCountText);
+    }
+
+    [Fact]
+    public void LoadData_ResetsSearchState()
+    {
+        AddProduct("Widget A");
+        var vm = CreateVm(1);
+        vm.SearchQuery = "Widget";
+        Assert.Equal("1/1", vm.MatchCountText);
+
+        vm.LoadData();
+
+        Assert.Equal(string.Empty, vm.SearchQuery);
+        Assert.Equal("0/0", vm.MatchCountText);
+    }
 }

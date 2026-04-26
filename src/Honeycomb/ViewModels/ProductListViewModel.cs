@@ -82,6 +82,7 @@ public partial class ProductListViewModel : ViewModelBase
 
     public void LoadData()
     {
+        SearchQuery = string.Empty;
         _db.ChangeTracker.Clear();
         Products.Clear();
 
