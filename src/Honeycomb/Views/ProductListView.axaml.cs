@@ -30,6 +30,46 @@ public partial class ProductListView : UserControl
         RestoreColumnWidths();
     }
 
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
+        if (DataContext is ProductListViewModel vm)
+        {
+            vm.MatchScrollRequested += OnMatchScrollRequested;
+            vm.PropertyChanged += OnVmPropertyChanged;
+        }
+    }
+
+    protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        if (DataContext is ProductListViewModel vm)
+        {
+            vm.MatchScrollRequested -= OnMatchScrollRequested;
+            vm.PropertyChanged -= OnVmPropertyChanged;
+        }
+        base.OnDetachedFromVisualTree(e);
+    }
+
+    private void OnMatchScrollRequested(Product product)
+    {
+        ProductGrid.SelectedItem = product;
+        ProductGrid.ScrollIntoView(product, null);
+    }
+
+    private void OnVmPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(ProductListViewModel.IsSearchVisible)
+            && sender is ProductListViewModel vm
+            && vm.IsSearchVisible)
+        {
+            Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+            {
+                SearchBox.Focus();
+                SearchBox.SelectAll();
+            });
+        }
+    }
+
     private void RestoreColumnWidths()
     {
         if (DataContext is not ProductListViewModel vm)
@@ -127,6 +167,34 @@ public partial class ProductListView : UserControl
         }
     }
 
-    private void OnSearchKeyDown(object? sender, KeyEventArgs e) { }
-    private void OnCloseSearchClicked(object? sender, RoutedEventArgs e) { }
+    private void OnSearchKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (DataContext is not ProductListViewModel vm) return;
+
+        switch (e.Key)
+        {
+            case Key.Enter:
+                if (e.KeyModifiers.HasFlag(KeyModifiers.Shift))
+                    vm.PreviousMatch();
+                else
+                    vm.NextMatch();
+                e.Handled = true;
+                break;
+
+            case Key.Escape:
+                vm.CloseSearch();
+                ProductGrid.Focus();
+                e.Handled = true;
+                break;
+        }
+    }
+
+    private void OnCloseSearchClicked(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is ProductListViewModel vm)
+        {
+            vm.CloseSearch();
+            ProductGrid.Focus();
+        }
+    }
 }
