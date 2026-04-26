@@ -8,3 +8,5 @@ obj\
 *.suo
 *.db
 CLAUDE.md
+publish/
+publish-debug/
