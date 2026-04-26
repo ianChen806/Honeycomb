@@ -126,4 +126,7 @@ public partial class ProductListView : UserControl
             vm.MoveProducts(selected, target.Id);
         }
     }
+
+    private void OnSearchKeyDown(object? sender, KeyEventArgs e) { }
+    private void OnCloseSearchClicked(object? sender, RoutedEventArgs e) { }
 }

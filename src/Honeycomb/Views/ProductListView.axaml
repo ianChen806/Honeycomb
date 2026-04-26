@@ -8,6 +8,10 @@
              x:Class="Honeycomb.Views.ProductListView"
              x:DataType="vm:ProductListViewModel">
 
+    <UserControl.KeyBindings>
+        <KeyBinding Gesture="Ctrl+F" Command="{Binding OpenSearchCommand}"/>
+    </UserControl.KeyBindings>
+
     <Grid RowDefinitions="Auto,*,Auto" Margin="16" Background="Transparent" PointerPressed="OnBackgroundPressed">
 
         <!-- Add Product Form -->
@@ -115,6 +119,22 @@
                 <DataGridTextColumn Header="建立時間" Binding="{Binding CreatedAt, StringFormat=yyyy/MM/dd}" Width="120" IsReadOnly="True"/>
             </DataGrid.Columns>
         </DataGrid>
+
+        <!-- Floating Search Overlay -->
+        <Border Grid.Row="1"
+                IsVisible="{Binding IsSearchVisible}"
+                HorizontalAlignment="Right" VerticalAlignment="Top"
+                Margin="0,8,16,0" Padding="8" CornerRadius="6"
+                Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"
+                BoxShadow="0 2 8 0 #40000000">
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <TextBox Name="SearchBox" Width="200" Watermark="搜尋商品名稱"
+                         Text="{Binding SearchQuery}" KeyDown="OnSearchKeyDown"/>
+                <TextBlock Text="{Binding MatchCountText}" VerticalAlignment="Center"
+                           Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+                <Button Content="✕" Click="OnCloseSearchClicked"/>
+            </StackPanel>
+        </Border>
 
         <!-- Bottom Bar -->
         <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="8" Margin="0,16,0,0">
