@@ -27,6 +27,16 @@ public partial class MainWindow : Window
             SaveWindowSize();
             SaveAllColumnWidths();
         };
+        AddHandler(KeyDownEvent, OnWindowKeyDown, RoutingStrategies.Tunnel);
+    }
+
+    private void OnWindowKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (e.Key != Key.F || e.KeyModifiers != KeyModifiers.Control) return;
+        if (MainTabControl.SelectedItem is not TabItem { Tag: CategoryTabItem categoryTab }) return;
+
+        categoryTab.ProductList.IsSearchVisible = true;
+        e.Handled = true;
     }
 
     private void OnLoaded(object? sender, RoutedEventArgs e)

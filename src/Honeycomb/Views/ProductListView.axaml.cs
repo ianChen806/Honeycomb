@@ -197,4 +197,14 @@ public partial class ProductListView : UserControl
             ProductGrid.Focus();
         }
     }
+
+    private void OnPreviousMatchClicked(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is ProductListViewModel vm) vm.PreviousMatch();
+    }
+
+    private void OnNextMatchClicked(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is ProductListViewModel vm) vm.NextMatch();
+    }
 }

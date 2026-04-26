@@ -8,10 +8,6 @@
              x:Class="Honeycomb.Views.ProductListView"
              x:DataType="vm:ProductListViewModel">
 
-    <UserControl.KeyBindings>
-        <KeyBinding Gesture="Ctrl+F" Command="{Binding OpenSearchCommand}"/>
-    </UserControl.KeyBindings>
-
     <Grid RowDefinitions="Auto,*,Auto" Margin="16" Background="Transparent" PointerPressed="OnBackgroundPressed">
 
         <!-- Add Product Form -->
@@ -132,7 +128,9 @@
                          Text="{Binding SearchQuery}" KeyDown="OnSearchKeyDown"/>
                 <TextBlock Text="{Binding MatchCountText}" VerticalAlignment="Center"
                            Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
-                <Button Content="✕" Click="OnCloseSearchClicked"/>
+                <Button Content="↑" ToolTip.Tip="上一筆 (Shift+Enter)" Click="OnPreviousMatchClicked"/>
+                <Button Content="↓" ToolTip.Tip="下一筆 (Enter)" Click="OnNextMatchClicked"/>
+                <Button Content="✕" ToolTip.Tip="關閉 (Esc)" Click="OnCloseSearchClicked"/>
             </StackPanel>
         </Border>
 
