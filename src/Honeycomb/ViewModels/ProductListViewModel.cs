@@ -244,6 +244,8 @@ public partial class ProductListViewModel : ViewModelBase
 
     public event Action? ProductsMoved;
 
+    public event Action<Product>? MatchScrollRequested;
+
     public void MoveProducts(System.Collections.Generic.IReadOnlyList<Product> products, int targetCategoryId)
     {
         ErrorMessage = string.Empty;
@@ -302,6 +304,27 @@ public partial class ProductListViewModel : ViewModelBase
 
         _currentMatchIndex = _matches.Count > 0 ? 0 : -1;
         UpdateMatchCountText();
+
+        if (_currentMatchIndex >= 0)
+        {
+            MatchScrollRequested?.Invoke(_matches[_currentMatchIndex]);
+        }
+    }
+
+    public void NextMatch()
+    {
+        if (_matches.Count == 0) return;
+        _currentMatchIndex = (_currentMatchIndex + 1) % _matches.Count;
+        UpdateMatchCountText();
+        MatchScrollRequested?.Invoke(_matches[_currentMatchIndex]);
+    }
+
+    public void PreviousMatch()
+    {
+        if (_matches.Count == 0) return;
+        _currentMatchIndex = (_currentMatchIndex - 1 + _matches.Count) % _matches.Count;
+        UpdateMatchCountText();
+        MatchScrollRequested?.Invoke(_matches[_currentMatchIndex]);
     }
 
     private void UpdateMatchCountText()

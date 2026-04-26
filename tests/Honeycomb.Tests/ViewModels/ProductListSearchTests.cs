@@ -107,4 +107,63 @@ public class ProductListSearchTests : IDisposable
 
         Assert.Equal("1/2", vm.MatchCountText);
     }
+
+    [Fact]
+    public void NextMatch_AdvancesIndex()
+    {
+        AddProduct("Widget A");
+        AddProduct("Widget B");
+        AddProduct("Widget C");
+        var vm = CreateVm(1);
+        vm.SearchQuery = "Widget";
+        Assert.Equal("1/3", vm.MatchCountText);
+
+        vm.NextMatch();
+
+        Assert.Equal("2/3", vm.MatchCountText);
+    }
+
+    [Fact]
+    public void NextMatch_WrapsAroundAtEnd()
+    {
+        AddProduct("Widget A");
+        AddProduct("Widget B");
+        var vm = CreateVm(1);
+        vm.SearchQuery = "Widget";
+
+        vm.NextMatch();   // 2/2
+        vm.NextMatch();   // wrap to 1/2
+
+        Assert.Equal("1/2", vm.MatchCountText);
+    }
+
+    [Fact]
+    public void PreviousMatch_WrapsAroundAtStart()
+    {
+        AddProduct("Widget A");
+        AddProduct("Widget B");
+        var vm = CreateVm(1);
+        vm.SearchQuery = "Widget";   // 1/2
+
+        vm.PreviousMatch();          // wrap to 2/2
+
+        Assert.Equal("2/2", vm.MatchCountText);
+    }
+
+    [Fact]
+    public void NextMatch_RaisesMatchScrollRequested()
+    {
+        AddProduct("Widget A");
+        AddProduct("Widget B");
+        var vm = CreateVm(1);
+        vm.SearchQuery = "Widget";
+
+        Product? scrolled = null;
+        vm.MatchScrollRequested += p => scrolled = p;
+
+        vm.NextMatch();
+
+        Assert.NotNull(scrolled);
+        Assert.Equal("Widget B", scrolled!.Name);
+    }
 }
