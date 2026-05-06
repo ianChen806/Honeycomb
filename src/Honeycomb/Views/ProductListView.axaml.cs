@@ -5,6 +5,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Honeycomb.Models;
 using Honeycomb.Services;
@@ -37,6 +38,8 @@ public partial class ProductListView : UserControl
         {
             vm.MatchScrollRequested += OnMatchScrollRequested;
             vm.PropertyChanged += OnVmPropertyChanged;
+            vm.OrderedProductsProvider = GetOrderedProducts;
+            ProductGrid.Sorting += OnGridSorting;
         }
     }
 
@@ -46,6 +49,8 @@ public partial class ProductListView : UserControl
         {
             vm.MatchScrollRequested -= OnMatchScrollRequested;
             vm.PropertyChanged -= OnVmPropertyChanged;
+            vm.OrderedProductsProvider = null;
+            ProductGrid.Sorting -= OnGridSorting;
         }
         base.OnDetachedFromVisualTree(e);
     }
@@ -54,6 +59,23 @@ public partial class ProductListView : UserControl
     {
         ProductGrid.SelectedItem = product;
         ProductGrid.ScrollIntoView(product, null);
+    }
+
+    private IEnumerable<Product> GetOrderedProducts()
+    {
+        if (ProductGrid.CollectionView is { } view)
+        {
+            return view.OfType<Product>().ToList();
+        }
+        return DataContext is ProductListViewModel vm
+            ? vm.Products.ToList()
+            : new List<Product>();
+    }
+
+    private void OnGridSorting(object? sender, DataGridColumnEventArgs e)
+    {
+        if (DataContext is not ProductListViewModel vm) return;
+        Dispatcher.UIThread.Post(vm.OnSortChanged);
     }
 
     private void OnVmPropertyChanged(object? sender, PropertyChangedEventArgs e)
