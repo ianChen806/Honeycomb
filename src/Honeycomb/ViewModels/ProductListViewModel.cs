@@ -326,6 +326,30 @@ public partial class ProductListViewModel : ViewModelBase
         }
     }
 
+    public void OnSortChanged()
+    {
+        if (_matches.Count == 0) return;
+
+        var prevSelected = _currentMatchIndex >= 0 ? _matches[_currentMatchIndex] : null;
+
+        var source = OrderedProductsProvider?.Invoke() ?? Products;
+        _matches = source
+            .Where(p => p.Name.Contains(SearchQuery, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        if (_matches.Count == 0)
+        {
+            _currentMatchIndex = -1;
+        }
+        else
+        {
+            var newIndex = prevSelected is null ? 0 : _matches.IndexOf(prevSelected);
+            _currentMatchIndex = newIndex >= 0 ? newIndex : 0;
+        }
+
+        UpdateMatchCountText();
+    }
+
     public void NextMatch()
     {
         if (_matches.Count == 0) return;

@@ -120,4 +120,84 @@ public class ProductSearchSortNavigationTests : IDisposable
 
         Assert.Equal("1/2", vm.MatchCountText);
     }
+
+    [Fact]
+    public void OnSortChanged_PreservesSelectedItem()
+    {
+        AddProduct("Widget A");
+        AddProduct("Widget B");
+        AddProduct("Widget C");
+        var vm = CreateVm(1);
+
+        var asc = vm.Products.OrderBy(p => p.Name).ToList();
+        var desc = vm.Products.OrderByDescending(p => p.Name).ToList();
+
+        var ordered = asc;
+        vm.OrderedProductsProvider = () => ordered;
+
+        vm.SearchQuery = "Widget";
+        vm.NextMatch();
+        Assert.Equal("2/3", vm.MatchCountText);
+
+        ordered = desc;
+        vm.OnSortChanged();
+
+        Assert.Equal("2/3", vm.MatchCountText);
+    }
+
+    [Fact]
+    public void OnSortChanged_FallsBackToZero_WhenSelectedItemMissing()
+    {
+        var a = AddProduct("Widget A");
+        var b = AddProduct("Widget B");
+        var c = AddProduct("Widget C");
+        var vm = CreateVm(1);
+
+        var ordered = new List<Product> { a, b, c };
+        vm.OrderedProductsProvider = () => ordered;
+
+        vm.SearchQuery = "Widget";
+        vm.NextMatch();
+
+        ordered = new List<Product> { a, c };
+        vm.OnSortChanged();
+
+        Assert.Equal("1/2", vm.MatchCountText);
+    }
+
+    [Fact]
+    public void OnSortChanged_DoesNothing_WhenNoMatches()
+    {
+        AddProduct("Widget A");
+        var vm = CreateVm(1);
+        vm.OrderedProductsProvider = () => vm.Products;
+
+        Product? scrolled = null;
+        vm.MatchScrollRequested += p => scrolled = p;
+
+        vm.OnSortChanged();
+
+        Assert.Equal("0/0", vm.MatchCountText);
+        Assert.Null(scrolled);
+    }
+
+    [Fact]
+    public void OnSortChanged_DoesNotRaiseScrollRequested()
+    {
+        AddProduct("Widget A");
+        AddProduct("Widget B");
+        var vm = CreateVm(1);
+
+        var ordered = vm.Products.ToList();
+        vm.OrderedProductsProvider = () => ordered;
+
+        vm.SearchQuery = "Widget";
+
+        int scrollCount = 0;
+        vm.MatchScrollRequested += _ => scrollCount++;
+
+        vm.OnSortChanged();
+
+        Assert.Equal(0, scrollCount);
+    }
 }
