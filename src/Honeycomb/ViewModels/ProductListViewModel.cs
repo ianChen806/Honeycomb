@@ -71,6 +71,8 @@ public partial class ProductListViewModel : ViewModelBase
     private List<Product> _matches = [];
     private int _currentMatchIndex = -1;
 
+    public Func<IEnumerable<Product>>? OrderedProductsProvider { get; set; }
+
     public ProductListViewModel(AppDbContext db, ExcelExportService excelExport, Func<Task<string?>> getSaveFilePath, int categoryId = 1)
     {
         _db = db;
@@ -310,7 +312,8 @@ public partial class ProductListViewModel : ViewModelBase
             return;
         }
 
-        _matches = Products
+        var source = OrderedProductsProvider?.Invoke() ?? Products;
+        _matches = source
             .Where(p => p.Name.Contains(SearchQuery, StringComparison.OrdinalIgnoreCase))
             .ToList();
 
