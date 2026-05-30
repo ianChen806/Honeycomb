@@ -10,6 +10,7 @@ public class AppDbContext : DbContext
     public DbSet<Currency> Currencies => Set<Currency>();
     public DbSet<Product> Products => Set<Product>();
     public DbSet<Category> Categories => Set<Category>();
+    public DbSet<ProductImage> ProductImages => Set<ProductImage>();
 
     public string DbPath { get; }
 
@@ -73,6 +74,17 @@ public class AppDbContext : DbContext
                   .WithMany()
                   .HasForeignKey(p => p.CategoryId)
                   .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<ProductImage>(entity =>
+        {
+            entity.HasKey(pi => pi.Id);
+            entity.HasIndex(pi => pi.ProductId).IsUnique();
+            entity.Property(pi => pi.Data).IsRequired();
+            entity.HasOne<Product>()
+                  .WithOne()
+                  .HasForeignKey<ProductImage>(pi => pi.ProductId)
+                  .OnDelete(DeleteBehavior.Cascade);
         });
     }
 }
