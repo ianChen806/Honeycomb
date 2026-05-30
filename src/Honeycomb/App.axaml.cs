@@ -34,6 +34,7 @@ public partial class App : Application
             db.Database.Migrate();
 
             var excelExport = new ExcelExportService();
+            var imageCompression = new ImageCompressionService();
 
             var mainWindow = new MainWindow();
 
@@ -52,7 +53,7 @@ public partial class App : Application
                 return file?.Path.LocalPath;
             }
 
-            mainWindow.DataContext = new MainWindowViewModel(db, excelExport, GetSaveFilePath);
+            mainWindow.DataContext = new MainWindowViewModel(db, excelExport, imageCompression, GetSaveFilePath);
             desktop.MainWindow = mainWindow;
         }
 

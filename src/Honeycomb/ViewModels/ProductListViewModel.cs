@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -16,6 +17,7 @@ public partial class ProductListViewModel : ViewModelBase
 {
     private readonly AppDbContext _db;
     private readonly ExcelExportService _excelExport;
+    private readonly ImageCompressionService _imageCompression;
     private readonly Func<Task<string?>> _getSaveFilePath;
     private readonly int _categoryId;
 
@@ -73,13 +75,105 @@ public partial class ProductListViewModel : ViewModelBase
 
     public Func<IEnumerable<Product>>? OrderedProductsProvider { get; set; }
 
-    public ProductListViewModel(AppDbContext db, ExcelExportService excelExport, Func<Task<string?>> getSaveFilePath, int categoryId = 1)
+    public ProductListViewModel(AppDbContext db, ExcelExportService excelExport, ImageCompressionService imageCompression, Func<Task<string?>> getSaveFilePath, int categoryId = 1)
     {
         _db = db;
         _excelExport = excelExport;
+        _imageCompression = imageCompression;
         _getSaveFilePath = getSaveFilePath;
         _categoryId = categoryId;
         LoadData();
+    }
+
+    [ObservableProperty]
+    private Product? _selectedProduct;
+
+    [ObservableProperty]
+    private byte[]? _selectedImageBytes;
+
+    [ObservableProperty]
+    private byte[]? _newImageBytes;
+
+    public bool HasSelectedImage => SelectedImageBytes is not null;
+    public bool HasNewImage => NewImageBytes is not null;
+
+    partial void OnSelectedImageBytesChanged(byte[]? value) => OnPropertyChanged(nameof(HasSelectedImage));
+    partial void OnNewImageBytesChanged(byte[]? value) => OnPropertyChanged(nameof(HasNewImage));
+
+    partial void OnSelectedProductChanged(Product? value)
+    {
+        if (value is null)
+        {
+            SelectedImageBytes = null;
+            return;
+        }
+
+        SelectedImageBytes = _db.ProductImages
+            .Where(pi => pi.ProductId == value.Id)
+            .Select(pi => pi.Data)
+            .FirstOrDefault();
+    }
+
+    public void SetNewImage(Stream source)
+    {
+        ErrorMessage = string.Empty;
+        try
+        {
+            NewImageBytes = _imageCompression.Compress(source);
+        }
+        catch (Exception)
+        {
+            NewImageBytes = null;
+            ErrorMessage = "無法讀取圖片";
+        }
+    }
+
+    public void AttachImageToSelected(Stream source)
+    {
+        ErrorMessage = string.Empty;
+
+        if (SelectedProduct is null)
+        {
+            ErrorMessage = "請先選擇商品";
+            return;
+        }
+
+        byte[] bytes;
+        try
+        {
+            bytes = _imageCompression.Compress(source);
+        }
+        catch (Exception)
+        {
+            ErrorMessage = "無法讀取圖片";
+            return;
+        }
+
+        var existing = _db.ProductImages.FirstOrDefault(pi => pi.ProductId == SelectedProduct.Id);
+        if (existing is null)
+            _db.ProductImages.Add(new ProductImage { ProductId = SelectedProduct.Id, Data = bytes });
+        else
+            existing.Data = bytes;
+
+        _db.SaveChanges();
+        SelectedImageBytes = bytes;
+    }
+
+    public void RemoveImageFromSelected()
+    {
+        ErrorMessage = string.Empty;
+
+        if (SelectedProduct is null)
+            return;
+
+        var existing = _db.ProductImages.FirstOrDefault(pi => pi.ProductId == SelectedProduct.Id);
+        if (existing is not null)
+        {
+            _db.ProductImages.Remove(existing);
+            _db.SaveChanges();
+        }
+
+        SelectedImageBytes = null;
     }
 
     public void LoadData()
@@ -218,10 +312,17 @@ public partial class ProductListViewModel : ViewModelBase
         _db.Products.Add(product);
         _db.SaveChanges();
 
+        if (NewImageBytes is not null)
+        {
+            _db.ProductImages.Add(new ProductImage { ProductId = product.Id, Data = NewImageBytes });
+            _db.SaveChanges();
+        }
+
         NewName = string.Empty;
         NewExtraCost = 0;
         NewUnitPrice = null;
         NewListingPrice = null;
+        NewImageBytes = null;
 
         LoadData();
     }

@@ -16,6 +16,7 @@ public partial class MainWindowViewModel : ViewModelBase
 {
     private readonly AppDbContext _db;
     private readonly ExcelExportService _excelExport;
+    private readonly ImageCompressionService _imageCompression;
     private readonly Func<Task<string?>> _getSaveFilePath;
 
     public const int DefaultCategoryId = 1;
@@ -27,10 +28,11 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty]
     private object? _selectedTab;
 
-    public MainWindowViewModel(AppDbContext db, ExcelExportService excelExport, Func<Task<string?>> getSaveFilePath)
+    public MainWindowViewModel(AppDbContext db, ExcelExportService excelExport, ImageCompressionService imageCompression, Func<Task<string?>> getSaveFilePath)
     {
         _db = db;
         _excelExport = excelExport;
+        _imageCompression = imageCompression;
         _getSaveFilePath = getSaveFilePath;
 
         CurrencySettings = new CurrencySettingsViewModel(db);
@@ -49,7 +51,7 @@ public partial class MainWindowViewModel : ViewModelBase
         // Default category (Id=1) is included naturally via the database seed
         foreach (var category in _db.Categories.OrderBy(c => c.SortOrder).ToList())
         {
-            var productList = new ProductListViewModel(_db, _excelExport, _getSaveFilePath, category.Id);
+            var productList = new ProductListViewModel(_db, _excelExport, _imageCompression, _getSaveFilePath, category.Id);
             productList.ProductsMoved += ReloadAllProductLists;
             CategoryTabs.Add(new CategoryTabItem(category.Id, category.Name, productList));
         }

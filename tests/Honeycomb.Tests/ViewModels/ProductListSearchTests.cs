@@ -39,6 +39,7 @@ public class ProductListSearchTests : IDisposable
         return new ProductListViewModel(
             _db,
             new ExcelExportService(),
+            new ImageCompressionService(),
             () => Task.FromResult<string?>(null),
             categoryId);
     }
