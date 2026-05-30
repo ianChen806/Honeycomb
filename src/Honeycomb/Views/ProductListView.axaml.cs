@@ -1,10 +1,13 @@
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Honeycomb.Models;
@@ -228,5 +231,61 @@ public partial class ProductListView : UserControl
     private void OnNextMatchClicked(object? sender, RoutedEventArgs e)
     {
         if (DataContext is ProductListViewModel vm) vm.NextMatch();
+    }
+
+    private async void OnPickNewImageClicked(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is not ProductListViewModel vm) return;
+        var stream = await PickImageStreamAsync();
+        if (stream is null) return;
+        await using (stream)
+        {
+            vm.SetNewImage(stream);
+        }
+    }
+
+    private void OnClearNewImageClicked(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is ProductListViewModel vm)
+            vm.NewImageBytes = null;
+    }
+
+    private async void OnPickImageClicked(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is not ProductListViewModel vm) return;
+        var stream = await PickImageStreamAsync();
+        if (stream is null) return;
+        await using (stream)
+        {
+            vm.AttachImageToSelected(stream);
+        }
+    }
+
+    private void OnRemoveImageClicked(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is ProductListViewModel vm)
+            vm.RemoveImageFromSelected();
+    }
+
+    private async Task<Stream?> PickImageStreamAsync()
+    {
+        var topLevel = TopLevel.GetTopLevel(this);
+        if (topLevel is null) return null;
+
+        var files = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+        {
+            Title = "選擇商品圖片",
+            AllowMultiple = false,
+            FileTypeFilter = new[]
+            {
+                new FilePickerFileType("圖片")
+                {
+                    Patterns = new[] { "*.jpg", "*.jpeg", "*.png", "*.webp", "*.bmp" }
+                }
+            }
+        });
+
+        if (files.Count == 0) return null;
+        return await files[0].OpenReadAsync();
     }
 }
